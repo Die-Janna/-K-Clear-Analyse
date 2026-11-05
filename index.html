@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clear-Check Badminton</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: court-green hero band with half-court diagram, then three numbered work steps stacked in one column, feedback board last. */
+:root {
+  --bg: #f2f5f1;
+  --surface: #ffffff;
+  --surface-2: #e8eee8;
+  --ink: #15211a;
+  --muted: #56675c;
+  --line: #d3ddd5;
+  --court: #1d6646;
+  --court-deep: #154d35;
+  --court-ink: #f4faf6;
+  --court-line: rgba(255,255,255,.78);
+  --shuttle: #e2b100;
+  --shuttle-ink: #2a2200;
+  --ok: #23774a;
+  --ok-bg: #e1f1e7;
+  --part: #9a6410;
+  --part-bg: #f8ecd4;
+  --todo: #a83f33;
+  --todo-bg: #f8e2de;
+  --na: #66726b;
+  --na-bg: #e8ece9;
+  --focus: #1d6646;
+  --f-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1511; --surface: #16201a; --surface-2: #1d2a22; --ink: #e5ede7; --muted: #9aaca0; --line: #2a3a30;
+    --court: #1b5a3e; --court-deep: #123d2a; --court-ink: #eef7f1; --court-line: rgba(255,255,255,.62);
+    --shuttle: #f0c232; --shuttle-ink: #241d00;
+    --ok: #6fcf98; --ok-bg: #173324; --part: #e9b45c; --part-bg: #33270f; --todo: #f08f82; --todo-bg: #3a1c18; --na: #a3b0a8; --na-bg: #222c26;
+    --focus: #6fcf98;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1511; --surface: #16201a; --surface-2: #1d2a22; --ink: #e5ede7; --muted: #9aaca0; --line: #2a3a30;
+  --court: #1b5a3e; --court-deep: #123d2a; --court-ink: #eef7f1; --court-line: rgba(255,255,255,.62);
+  --shuttle: #f0c232; --shuttle-ink: #241d00;
+  --ok: #6fcf98; --ok-bg: #173324; --part: #e9b45c; --part-bg: #33270f; --todo: #f08f82; --todo-bg: #3a1c18; --na: #a3b0a8; --na-bg: #222c26;
+  --focus: #6fcf98;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.05; }
+p { margin: 0; }
+button, select, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--shuttle); outline-offset: 2px; border-radius: 4px; }
+
+/* Hero */
+.hero { background: var(--court); color: var(--court-ink); }
+.hero .wrap { padding-block: 36px 40px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 32px; align-items: center; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.hero h1 { font-size: clamp(44px, 8vw, 76px); font-weight: 700; letter-spacing: .005em; margin-top: 8px; }
+.hero h1 span { color: var(--shuttle); }
+.hero .lede { margin-top: 14px; max-width: 46ch; font-size: 17px; opacity: .95; }
+.hero ol { margin: 18px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.hero ol li { font-size: 14px; border: 1px solid var(--court-line); border-radius: 999px; padding: 4px 12px; }
+.court-svg { width: 100%; max-width: 380px; justify-self: end; display: block; }
+@media (max-width: 720px) {
+  .hero .wrap { grid-template-columns: 1fr; gap: 20px; padding-block: 28px 30px; }
+  .court-svg { justify-self: start; max-width: 320px; }
+}
+
+main .wrap { padding-block: 28px 56px; display: flex; flex-direction: column; gap: 28px; }
+
+/* Steps */
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.step-head { display: flex; gap: 14px; align-items: baseline; }
+.step-no { font-family: var(--f-display); font-weight: 700; font-size: 34px; line-height: 1; color: var(--focus); min-width: 1.2ch; }
+.step-head h2 { font-size: 30px; font-weight: 600; }
+.step-head p { color: var(--muted); margin-top: 4px; max-width: 65ch; }
+.step.locked { opacity: .55; }
+.step.locked .step-body { pointer-events: none; }
+.step-body { display: flex; flex-direction: column; gap: 16px; }
+
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+
+.tips { background: var(--surface-2); border-radius: 10px; padding: 14px 16px; font-size: 15px; }
+.tips h3 { font-family: var(--f-body); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.tips ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.drop { border: 2px dashed var(--line); border-radius: 12px; padding: 22px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; cursor: pointer; transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: var(--court); background: var(--surface-2); }
+.drop strong { font-size: 17px; }
+.drop small { color: var(--muted); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; width: fit-content; }
+.seg label { padding: 8px 14px; cursor: pointer; font-weight: 500; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--court); color: var(--court-ink); }
+.seg label:has(input:focus-visible) { outline: 3px solid var(--shuttle); outline-offset: -3px; }
+textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--bg); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; cursor: pointer; min-height: 42px; }
+.btn:hover { border-color: var(--court); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--court); color: var(--court-ink); border-color: var(--court); }
+.btn.primary:hover { background: var(--court-deep); }
+.btn.go { background: var(--shuttle); color: var(--shuttle-ink); border-color: var(--shuttle); font-size: 17px; padding: 12px 20px; }
+.btn.small { min-height: 36px; padding: 6px 10px; font-size: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* Player */
+.player { background: #000; border-radius: 10px; overflow: hidden; aspect-ratio: 16 / 9; max-width: 100%; display: grid; place-items: center; }
+.player video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.player .empty { color: #c9d4cc; font-size: 15px; padding: 16px; text-align: center; }
+.timeline { position: relative; height: 34px; border-radius: 8px; background: var(--surface-2); cursor: pointer; touch-action: none; }
+.timeline .sel { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--shuttle) 35%, transparent); border-left: 3px solid var(--shuttle); border-right: 3px solid var(--shuttle); }
+.timeline .head { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); transform: translateX(-1px); }
+.readout { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.readout b { color: var(--ink); font-weight: 500; }
+.note { font-size: 14px; color: var(--part); background: var(--part-bg); border-radius: 8px; padding: 8px 12px; }
+
+/* Filmstrip */
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.strip figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.strip img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; background: var(--surface-2); display: block; }
+.strip figcaption { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.strip-empty { border: 1px dashed var(--line); border-radius: 10px; padding: 20px; color: var(--muted); font-size: 15px; text-align: center; }
+
+.status-line { font-size: 15px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--court); animation: spin .9s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.err { font-size: 15px; color: var(--todo); background: var(--todo-bg); border-radius: 8px; padding: 10px 12px; }
+
+/* Feedback board */
+.board { display: flex; flex-direction: column; gap: 20px; }
+.board-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.badge { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--shuttle); color: var(--shuttle-ink); }
+.summary { font-size: 18px; max-width: 65ch; }
+.strengths { display: flex; flex-direction: column; gap: 8px; }
+.strengths ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 65ch; }
+.kp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.kp { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); min-width: 0; border-left-width: 5px; }
+.kp[data-s="sitzt"] { border-left-color: var(--ok); }
+.kp[data-s="teilweise"] { border-left-color: var(--part); }
+.kp[data-s="noch_nicht"] { border-left-color: var(--todo); }
+.kp[data-s="nicht_beurteilbar"] { border-left-color: var(--na); }
+.kp-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.kp h3 { font-size: 21px; font-weight: 600; }
+.chip { font-size: 12px; font-weight: 700; letter-spacing: .04em; padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex: none; }
+.chip[data-s="sitzt"] { color: var(--ok); background: var(--ok-bg); }
+.chip[data-s="teilweise"] { color: var(--part); background: var(--part-bg); }
+.chip[data-s="noch_nicht"] { color: var(--todo); background: var(--todo-bg); }
+.chip[data-s="nicht_beurteilbar"] { color: var(--na); background: var(--na-bg); }
+.kp p { font-size: 15px; }
+.kp .tip { color: var(--muted); }
+.kp .tip b { color: var(--ink); }
+.focus { background: var(--court); color: var(--court-ink); border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+.focus h3 { font-size: 26px; font-weight: 600; }
+.focus-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.focus-item { border-top: 2px solid var(--court-line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.focus-item h4 { margin: 0; font-size: 18px; font-weight: 700; }
+.focus-item p { font-size: 15px; opacity: .95; }
+.focus-item .drill { font-size: 15px; background: rgba(255,255,255,.1); border-radius: 8px; padding: 8px 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.privacy { font-size: 14px; color: var(--muted); max-width: 70ch; }
+input[type="text"], input[type="password"] { width: 100%; max-width: 320px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--bg); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Sport-LK · Badminton · Überkopf-Clear Vorhand</div>
+      <h1>Clear-<span>Check</span></h1>
+      <p class="lede">Lade dein Video hoch, markiere deinen Schlag und hol dir eine Rückmeldung zu allen sieben Knotenpunkten, die ihr im Unterricht erarbeitet habt.</p>
+      <ol aria-label="Ablauf">
+        <li>Video laden</li>
+        <li>Schlag markieren</li>
+        <li>Rückmeldung lesen</li>
+      </ol>
+    </div>
+    <svg class="court-svg" viewBox="0 0 380 210" role="img" aria-label="Seitenansicht eines Badmintonfelds mit der hohen Flugkurve eines Clears von der eigenen Grundlinie zur gegnerischen Grundlinie">
+      <line x1="10" y1="180" x2="370" y2="180" stroke="var(--court-line)" stroke-width="2"/>
+      <line x1="190" y1="180" x2="190" y2="128" stroke="var(--court-line)" stroke-width="3"/>
+      <line x1="186" y1="128" x2="194" y2="128" stroke="var(--court-line)" stroke-width="3"/>
+      <line x1="30" y1="174" x2="30" y2="186" stroke="var(--court-line)" stroke-width="2"/>
+      <line x1="350" y1="174" x2="350" y2="186" stroke="var(--court-line)" stroke-width="2"/>
+      <path d="M44 92 C 120 -40, 270 -30, 342 170" fill="none" stroke="var(--shuttle)" stroke-width="2.5" stroke-dasharray="6 6"/>
+      <circle cx="44" cy="92" r="5" fill="var(--shuttle)"/>
+      <text x="30" y="202" fill="var(--court-line)" font-family="IBM Plex Mono, monospace" font-size="10" text-anchor="middle">Grundlinie</text>
+      <text x="190" y="202" fill="var(--court-line)" font-family="IBM Plex Mono, monospace" font-size="10" text-anchor="middle">Netz 1,55 m</text>
+      <text x="350" y="202" fill="var(--court-line)" font-family="IBM Plex Mono, monospace" font-size="10" text-anchor="middle">Grundlinie</text>
+      <text x="58" y="88" fill="var(--court-ink)" font-family="IBM Plex Mono, monospace" font-size="10">hoher Treffpunkt</text>
+    </svg>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section class="step" id="step1" aria-labelledby="h1s">
+      <div class="step-head">
+        <div class="step-no" aria-hidden="true">1</div>
+        <div>
+          <h2 id="h1s">Video laden</h2>
+          <p>Dein Video bleibt auf deinem Gerät. Für die Analyse werden nur einzelne Standbilder aus dem markierten Abschnitt an die KI (Google Gemini) geschickt.</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="cols">
+          <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+            <label class="drop" id="drop" for="file">
+              <input type="file" id="file" accept="video/*">
+              <strong>Video auswählen</strong>
+              <small id="fileName">MP4 oder MOV aus der Kamera-App, am besten unter 30 Sekunden</small>
+            </label>
+            <div class="field">
+              <span class="label" id="handLbl">Deine Schlaghand</span>
+              <div class="seg" role="radiogroup" aria-labelledby="handLbl">
+                <label><input type="radio" name="hand" id="handR" value="rechts" checked> Rechts</label>
+                <label><input type="radio" name="hand" id="handL" value="links"> Links</label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="selfNote">Selbsteinschätzung (optional)</label>
+              <textarea id="selfNote" placeholder="Zum Beispiel: Ich habe das Gefühl, dass ich den Ball zu spät treffe."></textarea>
+            </div>
+          </div>
+          <div class="tips">
+            <h3>So filmst du gut</h3>
+            <ul>
+              <li>Handy im Querformat, ruhig abgestellt oder von einer Mitschülerin gehalten</li>
+              <li>Seitlich filmen, von deiner Schlagarmseite aus, etwa 4 bis 6 Meter entfernt</li>
+              <li>Ganzer Körper und Schläger über dem Kopf müssen im Bild sein</li>
+              <li>Zeitlupe nutzen, wenn dein Handy das kann (120 oder 240 fps)</li>
+              <li>Licht von vorn oder von der Seite, kein Gegenlicht vom Hallenfenster</li>
+              <li>Zwei bis drei Clears hintereinander aufnehmen, später den besten markieren</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="step locked" id="step2" aria-labelledby="h2s">
+      <div class="step-head">
+        <div class="step-no" aria-hidden="true">2</div>
+        <div>
+          <h2 id="h2s">Schlag markieren</h2>
+          <p>Setze den Start kurz bevor du ausholst und das Ende, wenn der Schläger ausgeschwungen ist. Ein guter Abschnitt dauert ungefähr 1 bis 2 Sekunden (in Zeitlupe entsprechend länger).</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="player" id="player"><div class="empty" id="playerEmpty">Hier erscheint dein Video, sobald du es in Schritt 1 ausgewählt hast.</div></div>
+        <div class="timeline" id="timeline" role="slider" tabindex="0" aria-label="Position im Video" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+          <div class="sel" id="sel" style="left:0;width:100%"></div>
+          <div class="head" id="head" style="left:0"></div>
+        </div>
+        <div class="row">
+          <button class="btn small" id="playBtn" type="button">Abspielen</button>
+          <button class="btn small" id="backBtn" type="button" aria-label="Ein Bild zurück">◀ Bild</button>
+          <button class="btn small" id="fwdBtn" type="button" aria-label="Ein Bild vor">Bild ▶</button>
+          <span class="label" style="margin-left:6px">Tempo</span>
+          <div class="seg" role="radiogroup" aria-label="Abspieltempo">
+            <label><input type="radio" name="rate" id="rate25" value="0.25"> 0,25×</label>
+            <label><input type="radio" name="rate" id="rate50" value="0.5"> 0,5×</label>
+            <label><input type="radio" name="rate" id="rate100" value="1" checked> 1×</label>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="setStart" type="button">Start hier setzen</button>
+          <button class="btn primary" id="setEnd" type="button">Ende hier setzen</button>
+          <button class="btn" id="resetSel" type="button">Ganzes Video</button>
+        </div>
+        <div class="readout">
+          <span>Position <b class="mono" id="posOut">0,00 s</b></span>
+          <span>Abschnitt <b class="mono" id="selOut">–</b></span>
+          <span>Länge <b class="mono" id="lenOut">–</b></span>
+        </div>
+        <p class="note" id="selNote" hidden></p>
+        <div class="row">
+          <button class="btn primary" id="extractBtn" type="button">Standbilder erzeugen</button>
+        </div>
+        <div id="stripWrap">
+          <div class="strip-empty" id="stripEmpty">Die Standbilder aus deinem Abschnitt erscheinen hier. Prüfe, ob Ausholen, Treffpunkt und Ausschwingen zu sehen sind.</div>
+          <div class="strip" id="strip" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="step locked" id="step3" aria-labelledby="h3s">
+      <div class="step-head">
+        <div class="step-no" aria-hidden="true">3</div>
+        <div>
+          <h2 id="h3s">Rückmeldung</h2>
+          <p>Gib den Kurscode ein, den du von deiner Lehrkraft bekommen hast. Die Analyse dauert meist 10 bis 30 Sekunden.</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label class="label" for="codeIn">Kurscode</label>
+          <input type="password" id="codeIn" autocomplete="off" placeholder="vom Kurs">
+        </div>
+        <div class="row">
+          <button class="btn go" id="askBtn" type="button" disabled>Rückmeldung anfordern</button>
+          <button class="btn" id="stopBtn" type="button" hidden>Abbrechen</button>
+        </div>
+        <div class="status-line" id="status" hidden><span class="spinner" aria-hidden="true"></span><span id="statusText">Die KI schaut sich deine Bilder an …</span></div>
+        <p class="err" id="err" hidden></p>
+      </div>
+    </section>
+
+    <section class="board" id="board" aria-live="polite" aria-labelledby="boardTitle">
+      <div class="board-head">
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <span class="badge" id="boardBadge">Beispiel-Rückmeldung</span>
+          <h2 id="boardTitle" style="font-size:36px;font-weight:700">So sieht deine Rückmeldung aus</h2>
+        </div>
+        <div class="row" id="exportRow" hidden>
+          <button class="btn small" id="copyBtn" type="button">Text kopieren</button>
+          <button class="btn small" id="dlBtn" type="button">Als Datei speichern</button>
+        </div>
+      </div>
+      <p class="summary" id="summary"></p>
+      <p class="note" id="videoHint" hidden></p>
+      <div class="strengths">
+        <span class="label">Das sitzt schon</span>
+        <ul id="strengths"></ul>
+      </div>
+      <div class="focus" id="focusBox">
+        <h3>Dein Fokus für die nächste Runde</h3>
+        <div class="focus-items" id="focusItems"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="row" style="justify-content:space-between">
+          <span class="label">Die sieben Knotenpunkte</span>
+          <div class="legend" aria-label="Legende">
+            <span class="chip" data-s="sitzt">sitzt</span>
+            <span class="chip" data-s="teilweise">teilweise</span>
+            <span class="chip" data-s="noch_nicht">noch nicht</span>
+            <span class="chip" data-s="nicht_beurteilbar">nicht erkennbar</span>
+          </div>
+        </div>
+        <div class="kp-list" id="kpList"></div>
+      </div>
+      <p class="privacy">Die Rückmeldung entsteht automatisch aus wenigen Standbildern und kann sich irren, besonders bei schnellen Phasen wie dem Treffpunkt. Sie ersetzt nicht den Blick deiner Lehrkraft. Auf dieser Website wird nichts gespeichert: Wenn du die Seite schließt, sind Video und Rückmeldung weg. Speichere sie vorher, wenn du sie behalten möchtest.</p>
+    </section>
+
+  </div>
+</main>
+
+<video id="grab" muted playsinline preload="auto" hidden></video>
+<canvas id="cv" hidden></canvas>
+
+<script>
+(() => {
+  const KP = [
+    { id: "absinken", name: "Schlägerkopf sinkt ab", desc: "Beim Ausholen fällt der Schlägerkopf hinter Kopf und Rücken nach unten ab (Ellbogen oben, Schlägerkopf zeigt Richtung Boden)." },
+    { id: "peitsche", name: "Peitschenbewegung", desc: "Der Arm schnellt nach vorn oben: Ellbogen führt, dann Unterarm und Handgelenk mit Einwärtsdrehung (Pronation), wie ein Peitschenschlag." },
+    { id: "bein", name: "Gegengleiches Bein vorn", desc: "Seitstellung zum Netz; das Bein auf der Gegenseite der Schlaghand steht vorn (Rechtshänder: links vorn)." },
+    { id: "hohlkreuz", name: "Hohlkreuz", desc: "Beim Ausholen entsteht eine Bogenspannung im Rumpf: Oberkörper leicht nach hinten gebogen, Brust geöffnet, Hüfte nach vorn." },
+    { id: "impuls", name: "Impulserhaltung", desc: "Der Schwung wird ohne Stocken von Beinen über Hüfte und Rumpf auf Arm und Schläger übertragen; kein Abbremsen vor dem Treffpunkt, Gewichtsverlagerung nach vorn." },
+    { id: "ausschwingen", name: "Ausschwingen", desc: "Nach dem Treffpunkt schwingt der Schläger locker weiter, diagonal vor dem Körper zur Gegenseite nach unten aus; kein abruptes Stoppen." },
+    { id: "treffpunkt", name: "Hoher Balltreffpunkt", desc: "Der Ball wird am höchstmöglichen Punkt mit fast gestrecktem Schlagarm getroffen, leicht vor dem Körper." }
+  ];
+  const STATUS_TXT = { sitzt: "sitzt", teilweise: "teilweise", noch_nicht: "noch nicht", nicht_beurteilbar: "nicht erkennbar" };
+
+  const EXAMPLE = {
+    erkannt: true,
+    gesamteindruck: "Deine Grundbewegung ist klar als Überkopf-Clear erkennbar und wirkt schon ziemlich flüssig. Die Seitstellung und der Ausschwung passen gut; das größte Potenzial liegt in einem höheren Treffpunkt.",
+    staerken: [
+      "Du stehst sauber in Seitstellung mit dem linken Bein vorn und drehst dich zum Schlag hin auf.",
+      "Dein Schläger schwingt nach dem Treffpunkt locker diagonal vor dem Körper aus, ohne abzubremsen."
+    ],
+    knotenpunkte: [
+      { id: "absinken", status: "teilweise", beobachtung: "Der Schlägerkopf geht hinter den Kopf, fällt aber nur bis etwa Schulterhöhe ab.", tipp: "Lass den Schläger beim Ausholen bewusst Richtung Rücken fallen, als wolltest du dich zwischen den Schulterblättern kratzen." },
+      { id: "peitsche", status: "sitzt", beobachtung: "Ellbogen führt nach oben, danach schnellt der Unterarm deutlich nach.", tipp: "Weiter so; achte darauf, die Einwärtsdrehung des Unterarms bis zum Treffpunkt durchzuziehen." },
+      { id: "bein", status: "sitzt", beobachtung: "Linkes Bein steht vorn, die Schulterachse zeigt zum Netz.", tipp: "Behalte das bei, auch wenn du nach hinten laufen musst." },
+      { id: "hohlkreuz", status: "noch_nicht", beobachtung: "Der Oberkörper bleibt beim Ausholen weitgehend aufrecht, eine Bogenspannung ist kaum zu sehen.", tipp: "Schieb die Hüfte leicht nach vorn und öffne die Brust zur Decke, bevor der Arm nach vorn kommt." },
+      { id: "impuls", status: "teilweise", beobachtung: "Zwischen Ausholen und Schlag ist ein kurzer Stillstand zu erkennen.", tipp: "Verbinde Ausholen und Schlag zu einer durchgehenden Bewegung, ohne oben zu warten." },
+      { id: "ausschwingen", status: "sitzt", beobachtung: "Der Schläger endet vor dem Körper auf der linken Seite.", tipp: "Passt so." },
+      { id: "treffpunkt", status: "noch_nicht", beobachtung: "Der Schlagarm ist im Treffpunkt noch deutlich gebeugt, der Ball wird etwa auf Kopfhöhe getroffen.", tipp: "Geh früher unter den Ball und triff ihn mit fast gestrecktem Arm vor dem Körper." }
+    ],
+    fokus: [
+      { titel: "Höher treffen", warum: "Ein höherer Treffpunkt gibt deinem Clear mehr Weite und einen steileren Abflug, damit er sicher bis zur Grundlinie fliegt.", uebung: "Schattenschlag unter einem Basketballkorb oder einer markierten Wandstelle: 3 × 10 Schläge, bei denen der Schläger die Markierung mit gestrecktem Arm berührt." },
+      { titel: "Bogenspannung aufbauen", warum: "Das Hohlkreuz speichert Energie, die du über den Rumpf in den Schlag gibst.", uebung: "Wurfübung mit einem Federball oder Tennisball über Kopf: Hüfte vor, Brust auf, dann werfen. 3 × 8 Würfe, anschließend direkt 5 Clears." }
+    ],
+    videohinweis: ""
+  };
+
+  const $ = id => document.getElementById(id);
+  const fmt = s => (Math.max(0, s || 0)).toFixed(2).replace(".", ",") + " s";
+  const state = { url: null, dur: 0, start: 0, end: 0, fps: 30, frames: [], file: null, ctl: null, result: null };
+
+  const N_FRAMES = 10;
+  try { const c0 = localStorage.getItem("clearcheck-code"); if (c0) $("codeIn").value = c0; } catch {}
+
+  // ---------- Rendering of feedback ----------
+  function render(fb, isExample) {
+    $("boardBadge").textContent = isExample ? "Beispiel-Rückmeldung" : "Deine Rückmeldung";
+    $("boardTitle").textContent = isExample ? "So sieht deine Rückmeldung aus" : "Rückmeldung zu deinem Clear";
+    $("exportRow").hidden = isExample;
+    $("summary").textContent = String(fb.gesamteindruck || "");
+    const hint = String(fb.videohinweis || "").trim();
+    $("videoHint").hidden = !hint;
+    $("videoHint").textContent = hint ? "Zum Video: " + hint : "";
+
+    const ul = $("strengths"); ul.replaceChildren();
+    const st = Array.isArray(fb.staerken) ? fb.staerken : [];
+    st.forEach(s => { const li = document.createElement("li"); li.textContent = String(s); ul.append(li); });
+    ul.parentElement.hidden = st.length === 0;
+
+    const fi = $("focusItems"); fi.replaceChildren();
+    const fo = Array.isArray(fb.fokus) ? fb.fokus.slice(0, 2) : [];
+    fo.forEach(f => {
+      const d = document.createElement("div"); d.className = "focus-item";
+      const h = document.createElement("h4"); h.textContent = String(f.titel || "");
+      const p = document.createElement("p"); p.textContent = String(f.warum || "");
+      const u = document.createElement("p"); u.className = "drill"; u.textContent = "Übung: " + String(f.uebung || "");
+      d.append(h, p); if (f.uebung) d.append(u); fi.append(d);
+    });
+    $("focusBox").hidden = fo.length === 0;
+
+    const list = $("kpList"); list.replaceChildren();
+    const byId = {}; (Array.isArray(fb.knotenpunkte) ? fb.knotenpunkte : []).forEach(k => { if (k && k.id) byId[k.id] = k; });
+    KP.forEach(def => {
+      const k = byId[def.id] || { status: "nicht_beurteilbar", beobachtung: "Dazu liegt keine Einschätzung vor.", tipp: "" };
+      const s = STATUS_TXT[k.status] ? k.status : "nicht_beurteilbar";
+      const card = document.createElement("article"); card.className = "kp"; card.dataset.s = s;
+      const top = document.createElement("div"); top.className = "kp-top";
+      const h = document.createElement("h3"); h.textContent = def.name;
+      const chip = document.createElement("span"); chip.className = "chip"; chip.dataset.s = s; chip.textContent = STATUS_TXT[s];
+      top.append(h, chip);
+      const obs = document.createElement("p"); obs.textContent = String(k.beobachtung || "");
+      card.append(top, obs);
+      if (k.tipp) { const t = document.createElement("p"); t.className = "tip"; const b = document.createElement("b"); b.textContent = "Tipp: "; t.append(b, document.createTextNode(String(k.tipp))); card.append(t); }
+      list.append(card);
+    });
+  }
+
+  function asText(fb) {
+    const lines = [];
+    lines.push("CLEAR-CHECK – Rückmeldung Überkopf-Clear (Vorhand)");
+    lines.push("Datum: " + new Date().toLocaleDateString("de-DE") + " · Schlaghand: " + hand());
+    lines.push("");
+    lines.push("Gesamteindruck");
+    lines.push(String(fb.gesamteindruck || ""));
+    if (fb.videohinweis) { lines.push(""); lines.push("Zum Video: " + fb.videohinweis); }
+    if (Array.isArray(fb.staerken) && fb.staerken.length) { lines.push(""); lines.push("Das sitzt schon"); fb.staerken.forEach(s => lines.push("- " + s)); }
+    if (Array.isArray(fb.fokus) && fb.fokus.length) {
+      lines.push(""); lines.push("Dein Fokus für die nächste Runde");
+      fb.fokus.slice(0, 2).forEach(f => { lines.push("- " + f.titel + ": " + f.warum); if (f.uebung) lines.push("  Übung: " + f.uebung); });
+    }
+    lines.push(""); lines.push("Die sieben Knotenpunkte");
+    const byId = {}; (fb.knotenpunkte || []).forEach(k => { if (k && k.id) byId[k.id] = k; });
+    KP.forEach(def => {
+      const k = byId[def.id]; if (!k) return;
+      lines.push("- " + def.name + " [" + (STATUS_TXT[k.status] || "nicht erkennbar") + "]: " + (k.beobachtung || ""));
+      if (k.tipp) lines.push("  Tipp: " + k.tipp);
+    });
+    lines.push(""); lines.push("Automatisch erstellt aus Standbildern; ersetzt nicht die Einschätzung der Lehrkraft.");
+    return lines.join("\n");
+  }
+
+  render(EXAMPLE, true);
+
+  // ---------- Step 1: file ----------
+  const hand = () => ($("handL").checked ? "links" : "rechts");
+  const drop = $("drop");
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => { const f = e.dataTransfer?.files?.[0]; if (f) loadFile(f); });
+  $("file").addEventListener("change", e => { const f = e.target.files?.[0]; if (f) loadFile(f); });
+
+  let video = null;
+  function loadFile(f) {
+    if (!f.type.startsWith("video/") && !/\.(mp4|mov|m4v|webm)$/i.test(f.name)) {
+      $("fileName").textContent = "Das ist keine Videodatei. Wähle ein MP4 oder MOV.";
+      return;
+    }
+    if (state.url) URL.revokeObjectURL(state.url);
+    state.url = URL.createObjectURL(f); state.file = f;
+    $("fileName").textContent = f.name + " · " + (f.size / 1048576).toFixed(1).replace(".", ",") + " MB";
+    const p = $("player"); p.replaceChildren();
+    video = document.createElement("video");
+    video.src = state.url; video.playsInline = true; video.muted = true; video.preload = "auto"; video.controls = false;
+    video.setAttribute("playsinline", "");
+    p.append(video);
+    $("grab").src = state.url;
+    video.addEventListener("loadedmetadata", () => {
+      state.dur = video.duration || 0;
+      state.start = 0; state.end = state.dur;
+      $("timeline").setAttribute("aria-valuemax", state.dur.toFixed(2));
+      $("step2").classList.remove("locked");
+      if (video.videoHeight > video.videoWidth) showNote("Dein Video ist im Hochformat. Die Analyse funktioniert, aber im Querformat ist mehr vom Schlag zu sehen.");
+      else hideNote();
+      clearFrames(); updateSel(); setRate();
+      try { video.currentTime = 0.001; } catch {}
+      document.getElementById("step2").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    });
+    video.addEventListener("timeupdate", updateHead);
+    video.addEventListener("seeked", updateHead);
+    video.addEventListener("play", () => $("playBtn").textContent = "Pause");
+    video.addEventListener("pause", () => $("playBtn").textContent = "Abspielen");
+    video.addEventListener("error", () => { p.replaceChildren(Object.assign(document.createElement("div"), { className: "empty", textContent: "Dieses Video kann dein Browser nicht abspielen. Versuch es als MP4 (H.264) oder in einem anderen Browser." })); });
+  }
+
+  // ---------- Step 2: marking ----------
+  function showNote(t) { $("selNote").textContent = t; $("selNote").hidden = false; }
+  function hideNote() { $("selNote").hidden = true; }
+  function updateHead() {
+    if (!video || !state.dur) return;
+    const t = video.currentTime;
+    $("head").style.left = (t / state.dur * 100) + "%";
+    $("posOut").textContent = fmt(t);
+    $("timeline").setAttribute("aria-valuenow", t.toFixed(2));
+  }
+  function updateSel() {
+    if (!state.dur) return;
+    $("sel").style.left = (state.start / state.dur * 100) + "%";
+    $("sel").style.width = ((state.end - state.start) / state.dur * 100) + "%";
+    $("selOut").textContent = fmt(state.start) + " – " + fmt(state.end);
+    const len = state.end - state.start;
+    $("lenOut").textContent = fmt(len);
+    const portrait = video && video.videoHeight > video.videoWidth;
+    if (len > 6 && !portrait) showNote("Der Abschnitt ist recht lang. Markiere nur einen Schlag, sonst liegen die Standbilder zu weit auseinander und der Treffpunkt fehlt womöglich.");
+    else if (!portrait) hideNote();
+  }
+  function seekTo(t) { if (!video) return; video.pause(); video.currentTime = Math.min(Math.max(0, t), state.dur); }
+  const tl = $("timeline");
+  function tlSeek(e) { const r = tl.getBoundingClientRect(); seekTo((e.clientX - r.left) / r.width * state.dur); }
+  tl.addEventListener("pointerdown", e => { if (!video) return; tl.setPointerCapture(e.pointerId); tlSeek(e); });
+  tl.addEventListener("pointermove", e => { if (tl.hasPointerCapture(e.pointerId)) tlSeek(e); });
+  tl.addEventListener("keydown", e => {
+    if (!video) return;
+    const step = e.shiftKey ? 0.5 : 1 / state.fps;
+    if (e.key === "ArrowRight") { e.preventDefault(); seekTo(video.currentTime + step); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); seekTo(video.currentTime - step); }
+  });
+  $("playBtn").onclick = () => {
+    if (!video) return;
+    if (video.paused) {
+      if (video.currentTime >= state.end - 0.02 || video.currentTime < state.start) video.currentTime = state.start;
+      video.play().catch(() => {});
+    } else video.pause();
+  };
+  // stop at end of selection when playing
+  setInterval(() => { if (video && !video.paused && state.end < state.dur && video.currentTime >= state.end) { video.pause(); } }, 50);
+  $("backBtn").onclick = () => video && seekTo(video.currentTime - 1 / state.fps);
+  $("fwdBtn").onclick = () => video && seekTo(video.currentTime + 1 / state.fps);
+  function setRate() { const r = document.querySelector('input[name="rate"]:checked'); if (video && r) video.playbackRate = Number(r.value); }
+  document.querySelectorAll('input[name="rate"]').forEach(i => i.addEventListener("change", setRate));
+  $("setStart").onclick = () => { if (!video) return; state.start = video.currentTime; if (state.end <= state.start + 0.1) state.end = Math.min(state.dur, state.start + 1.5); clearFrames(); updateSel(); };
+  $("setEnd").onclick = () => { if (!video) return; state.end = video.currentTime; if (state.end <= state.start + 0.1) state.start = Math.max(0, state.end - 1.5); clearFrames(); updateSel(); };
+  $("resetSel").onclick = () => { state.start = 0; state.end = state.dur; clearFrames(); updateSel(); };
+
+  function clearFrames() {
+    state.frames.forEach(f => URL.revokeObjectURL(f.url));
+    state.frames = [];
+    $("strip").replaceChildren(); $("strip").hidden = true; $("stripEmpty").hidden = false;
+    $("askBtn").disabled = true;
+    $("step3").classList.add("locked");
+  }
+
+  function seekGrab(g, t) {
+    return new Promise((res, rej) => {
+      const done = () => { g.removeEventListener("seeked", done); clearTimeout(to); res(); };
+      const to = setTimeout(() => { g.removeEventListener("seeked", done); rej(new Error("seek")); }, 6000);
+      g.addEventListener("seeked", done);
+      g.currentTime = t;
+    });
+  }
+
+  $("extractBtn").onclick = async () => {
+    if (!video || !state.dur) return;
+    const btn = $("extractBtn"); btn.disabled = true; btn.textContent = "Erzeuge Standbilder …";
+    clearFrames();
+    const g = $("grab");
+    try {
+      if (g.readyState < 1) await new Promise((res, rej) => { g.addEventListener("loadedmetadata", res, { once: true }); g.addEventListener("error", rej, { once: true }); g.load(); });
+      const n = N_FRAMES;
+      const cv = $("cv"); const ctx = cv.getContext("2d");
+      const W = Math.min(768, g.videoWidth || 768);
+      const H = Math.round(W * (g.videoHeight / g.videoWidth || 9 / 16));
+      cv.width = W; cv.height = H;
+      const a = state.start, b = Math.max(state.end, state.start + 0.05);
+      for (let i = 0; i < n; i++) {
+        const t = Math.min(a + (b - a) * i / (n - 1), state.dur - 0.01);
+        await seekGrab(g, t);
+        ctx.drawImage(g, 0, 0, W, H);
+        const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.82));
+        if (!blob) throw new Error("blob");
+        const data = cv.toDataURL("image/jpeg", 0.82).split(",")[1];
+        state.frames.push({ t, data, url: URL.createObjectURL(blob) });
+      }
+      const strip = $("strip");
+      state.frames.forEach((f, i) => {
+        const fig = document.createElement("figure");
+        const img = document.createElement("img"); img.src = f.url; img.alt = "Standbild " + (i + 1) + " bei " + fmt(f.t);
+        const cap = document.createElement("figcaption"); cap.textContent = "Bild " + (i + 1) + " · " + fmt(f.t);
+        fig.append(img, cap); strip.append(fig);
+      });
+      strip.hidden = false; $("stripEmpty").hidden = true;
+      $("step3").classList.remove("locked");
+      $("askBtn").disabled = false;
+    } catch (e) {
+      clearFrames();
+      $("stripEmpty").textContent = "Die Standbilder konnten nicht erzeugt werden. Lade das Video neu oder versuch einen anderen Browser.";
+    } finally {
+      btn.disabled = false; btn.textContent = "Standbilder neu erzeugen";
+    }
+  };
+
+  // ---------- Step 3: ask the AI ----------
+  const ERR = {
+    code: "Der Kurscode stimmt nicht. Frag deine Lehrkraft nach dem richtigen Code.",
+    rate_limited: "Gerade nutzen sehr viele gleichzeitig die Analyse. Warte eine Minute und versuch es dann noch einmal.",
+    too_large: "Die Bilder sind zu groß. Lade die Seite neu und versuch es noch einmal.",
+    refused: "Für diese Bilder gab es keine Rückmeldung. Prüfe, ob wirklich dein Schlag zu sehen ist, und versuch es erneut.",
+    invalid: "Die Antwort der KI war unvollständig. Tippe noch einmal auf „Rückmeldung anfordern“.",
+    config: "Die Analyse ist noch nicht fertig eingerichtet. Sag bitte deiner Lehrkraft Bescheid.",
+    key: "Die Analyse ist gerade nicht erreichbar (Schlüsselproblem). Sag bitte deiner Lehrkraft Bescheid.",
+    model: "Die Analyse ist gerade nicht erreichbar (Modell nicht gefunden). Sag bitte deiner Lehrkraft Bescheid.",
+    upstream: "Die Verbindung zur KI ist abgebrochen. Versuch es noch einmal.",
+    network: "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal."
+  };
+
+  $("askBtn").onclick = async () => {
+    if (!state.frames.length) return;
+    const code = $("codeIn").value.trim();
+    if (!code) { $("err").textContent = "Bitte gib zuerst den Kurscode ein."; $("err").hidden = false; $("codeIn").focus(); return; }
+    try { localStorage.setItem("clearcheck-code", code); } catch {}
+    const ctl = new AbortController(); state.ctl = ctl;
+    $("askBtn").disabled = true; $("stopBtn").hidden = false;
+    $("err").hidden = true; $("status").hidden = false;
+    $("statusText").textContent = "Die KI schaut sich deine " + state.frames.length + " Standbilder an …";
+    try {
+      let res;
+      try {
+        res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          signal: ctl.signal,
+          body: JSON.stringify({
+            kurscode: code,
+            hand: hand(),
+            selfNote: $("selfNote").value.trim().slice(0, 600),
+            frames: state.frames.map(f => ({ t: f.t, data: f.data }))
+          })
+        });
+      } catch (e) {
+        if (e && e.name === "AbortError") throw { code: "cancelled" };
+        throw { code: "network" };
+      }
+      let data = null; try { data = await res.json(); } catch {}
+      if (!res.ok || !data) throw { code: (data && data.error) || "upstream", detail: data && data.detail };
+      if (!Array.isArray(data.knotenpunkte)) throw { code: "invalid" };
+      state.result = data;
+      render(data, false);
+      $("board").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    } catch (e) {
+      const code = e && e.code;
+      if (code !== "cancelled") {
+        let msg = ERR[code] || ERR.upstream;
+        if (e.detail && ["key", "model", "config"].includes(code)) msg += " (Technischer Hinweis für die Lehrkraft: " + e.detail + ")";
+        $("err").textContent = msg;
+        $("err").hidden = false;
+      }
+    } finally {
+      $("status").hidden = true; $("stopBtn").hidden = true;
+      $("askBtn").disabled = !state.frames.length;
+      state.ctl = null;
+    }
+  };
+  $("stopBtn").onclick = () => state.ctl?.abort();
+
+  // ---------- Export ----------
+  $("copyBtn").onclick = async () => {
+    if (!state.result) return;
+    const txt = asText(state.result);
+    try { await navigator.clipboard.writeText(txt); $("copyBtn").textContent = "Kopiert"; }
+    catch {
+      const ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.append(ta); ta.select(); try { document.execCommand("copy"); $("copyBtn").textContent = "Kopiert"; } catch { $("copyBtn").textContent = "Kopieren nicht möglich"; } ta.remove();
+    }
+    setTimeout(() => $("copyBtn").textContent = "Text kopieren", 2200);
+  };
+  $("dlBtn").onclick = () => {
+    if (!state.result) return;
+    const d = new Date(); const stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const url = URL.createObjectURL(new Blob([asText(state.result)], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = "clear-check-" + stamp + ".txt";
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  };
+
+})();
+</script>
+</body>
+</html>
