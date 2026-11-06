@@ -61,12 +61,63 @@ function parseLoose(text) {
   return null;
 }
 
+async function callGemini(model, key, payload) {
+  let res;
+  try {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      body: payload
+    });
+  } catch (e) {
+    return { ok: false, code: "upstream", detail: `Netzwerkfehler zu Google: ${e && e.message}`, retry: true };
+  }
+  if (!res.ok) {
+    let detail = "";
+    try { const e = await res.json(); detail = (Array.isArray(e) ? e[0] : e)?.error?.message || ""; } catch {}
+    const s = res.status;
+    const code = s === 429 ? "rate_limited" : s === 404 ? "model" : (s === 400 || s === 401 || s === 403) ? "key" : "upstream";
+    return { ok: false, code, detail: `Gemini ${s} (${model}): ${detail}`.slice(0, 300), retry: s >= 500 || s === 404 || s === 429 };
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", text = "", blocked = null, finishReason = null;
+  const eat = (line) => {
+    line = line.trim();
+    if (!line.startsWith("data:")) return;
+    const d = line.slice(5).trim();
+    if (!d) return;
+    try {
+      const j = JSON.parse(d);
+      if (j.promptFeedback && j.promptFeedback.blockReason) blocked = j.promptFeedback.blockReason;
+      const c = j.candidates && j.candidates[0];
+      if (c && c.finishReason) finishReason = c.finishReason;
+      for (const p of (c && c.content && c.content.parts) || []) if (p.text && !p.thought) text += p.text;
+    } catch {}
+  };
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) { eat(buf.slice(0, i)); buf = buf.slice(i + 1); }
+  }
+  if (buf) eat(buf);
+  if (blocked) return { ok: false, code: "refused", detail: `Von Google blockiert: ${blocked}`, retry: false };
+  const parsed = parseLoose(text);
+  if (!parsed || !Array.isArray(parsed.knotenpunkte)) {
+    return { ok: false, code: "invalid", detail: `Antwort nicht lesbar (${model}, finishReason ${finishReason}, ${text.length} Zeichen)`, retry: true };
+  }
+  return { ok: true, result: parsed };
+}
+
 export default async (request) => {
   if (request.method !== "POST") return json({ error: "method" }, 405);
 
   const key = env("GEMINI_API_KEY");
   const kurscode = env("KURSCODE");
-  const model = env("GEMINI_MODEL") || "gemini-flash-latest";
+  const customModel = env("GEMINI_MODEL");
+  const models = customModel ? [customModel] : ["gemini-flash-latest", "gemini-flash-lite-latest"];
   if (!key) return json({ error: "config", detail: "GEMINI_API_KEY ist in Netlify nicht eingetragen." }, 500);
 
   let body;
@@ -94,36 +145,39 @@ export default async (request) => {
     parts.push({ text: `Bild ${i + 1} (${times[i].toFixed(2)} s):` });
     parts.push({ inline_data: { mime_type: "image/jpeg", data: f.data } });
   });
+  const payload = JSON.stringify({
+    contents: [{ role: "user", parts }],
+    generationConfig: { responseMimeType: "application/json", temperature: 0.4, maxOutputTokens: 8192 }
+  });
 
-  let res;
-  try {
-    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.4, maxOutputTokens: 8192 }
-      })
-    });
-  } catch {
-    return json({ error: "upstream" }, 502);
-  }
-
-  if (res.status === 429) return json({ error: "rate_limited" }, 429);
-  if (!res.ok) {
-    let detail = "";
-    try { const e = await res.json(); detail = e?.error?.message || ""; } catch {}
-    console.log("Gemini-Fehler", res.status, detail);
-    const code = res.status === 404 ? "model" : (res.status === 400 || res.status === 403) ? "key" : "upstream";
-    return json({ error: code, detail: String(detail).slice(0, 300) }, 502);
-  }
-
-  const data = await res.json();
-  if (data?.promptFeedback?.blockReason) return json({ error: "refused" }, 422);
-  const text = (data?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
-  const parsed = parseLoose(text);
-  if (!parsed || !Array.isArray(parsed.knotenpunkte)) return json({ error: "invalid" }, 502);
-  return json(parsed, 200);
+  // Die Antwort wird sofort begonnen und mit Leerzeichen am Leben gehalten,
+  // damit Netlify die Verbindung nicht kappt, während Gemini nachdenkt.
+  const enc = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const ping = setInterval(() => { try { controller.enqueue(enc.encode(" ")); } catch {} }, 3000);
+      const finish = (obj) => {
+        clearInterval(ping);
+        try { controller.enqueue(enc.encode(JSON.stringify(obj))); controller.close(); } catch {}
+      };
+      try {
+        controller.enqueue(enc.encode(" "));
+        let last = null;
+        for (const m of models) {
+          const r = await callGemini(m, key, payload);
+          if (r.ok) { console.log("Analyse ok mit", m); finish(r.result); return; }
+          console.log("Gemini-Problem:", r.code, r.detail);
+          last = r;
+          if (!r.retry) break;
+        }
+        finish({ error: last ? last.code : "upstream", detail: last ? last.detail : "" });
+      } catch (e) {
+        console.log("Unerwarteter Fehler:", e && e.message);
+        finish({ error: "upstream", detail: String((e && e.message) || e).slice(0, 200) });
+      }
+    }
+  });
+  return new Response(stream, { status: 200, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 };
 
 export const config = { path: "/api/analyze" };
