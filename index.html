@@ -668,8 +668,11 @@ input[type="text"], input[type="password"] { width: 100%; max-width: 320px; bord
         if (e && e.name === "AbortError") throw { code: "cancelled" };
         throw { code: "network" };
       }
-      let data = null; try { data = await res.json(); } catch {}
-      if (!res.ok || !data) throw { code: (data && data.error) || "upstream", detail: data && data.detail };
+      let raw = ""; try { raw = await res.text(); } catch {}
+      let data = null; try { data = JSON.parse(raw.trim()); } catch {}
+      if (!data) throw { code: "upstream", detail: "Server antwortete mit Status " + res.status };
+      if (data.error) throw { code: data.error, detail: data.detail };
+      if (!res.ok) throw { code: "upstream", detail: "Status " + res.status };
       if (!Array.isArray(data.knotenpunkte)) throw { code: "invalid" };
       state.result = data;
       render(data, false);
@@ -678,7 +681,7 @@ input[type="text"], input[type="password"] { width: 100%; max-width: 320px; bord
       const code = e && e.code;
       if (code !== "cancelled") {
         let msg = ERR[code] || ERR.upstream;
-        if (e.detail && ["key", "model", "config"].includes(code)) msg += " (Technischer Hinweis für die Lehrkraft: " + e.detail + ")";
+        if (e.detail && code !== "code") msg += " (Technischer Hinweis für die Lehrkraft: " + e.detail + ")";
         $("err").textContent = msg;
         $("err").hidden = false;
       }
